@@ -12,9 +12,9 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
-from model import *
-from train import train_model
-from datagen import DataGeneratorDataset
+from hpunet_model import *
+from hpunet_train import train_model
+from hpunet_datagen import DataGeneratorDataset
 
 
 try:
@@ -273,3 +273,6 @@ print(f'{"="*60}')
 
 if args.use_wandb and WANDB_AVAILABLE:
     wandb.finish()
+
+# Usage example:
+"""python3 hpunet_main.py --config hpunet_config.json --use_wandb """

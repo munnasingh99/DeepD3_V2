@@ -201,3 +201,8 @@ if __name__ == "__main__":
         results = train_yolov8_optimized(args.data, config)
         
         print("\nP2 training complete")
+
+# Usage example:
+"""
+python3 yolov8_optimized_training.py --data spine_detection.yaml 
+"""

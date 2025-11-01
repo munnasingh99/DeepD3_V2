@@ -338,3 +338,12 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# Usage example:
+"""
+python3 yolo_prob_fusion.py \
+--yolo_weights yolo_weights/best.pt \
+--punet_weights punet_weights/best_model_f1_0.7119.pth \
+--tif dataset/DeepD3_Benchmark.tif \
+--out fusion
+"""

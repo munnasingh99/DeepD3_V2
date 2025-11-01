@@ -149,7 +149,7 @@ def main():
             img8 = clahe.apply(img8)
         
         # Convert to BGR for color overlay
-        img_bgr = cv2.cvtColor(img8, cv2.COLOR_GRAY2BGR)
+        img_bgr = cv2.cvtColor(img8, cv2.COLOR_GRAY2RGB)
         
         # Draw predictions for this slice
         if z in predictions_by_z:

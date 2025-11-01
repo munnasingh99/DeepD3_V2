@@ -676,3 +676,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# Usage example:
+"""python3 benchmark_eval_pipeline.py \
+--weights yolov_weights/best.pt \
+"""

@@ -460,7 +460,7 @@ if __name__ == "__main__":
 
 # Usage:
 """
-python uncertainty_maps.py \
+python3 uncertainty_maps.py \
     --target spine \
     --weights best_model.pth \
     --tif input.tif \

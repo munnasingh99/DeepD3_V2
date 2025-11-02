@@ -83,7 +83,8 @@ python -c "import flammkuchen as fl; print('Training:', fl.load('dataset/DeepD3_
 ```
 ## You can download the pretrained model weights here:
 
-[![Download Weights](https://img.shields.io/badge/Download%20Weights-Google%20Drive-blue?logo=google-drive)](https://drive.google.com/uc?export=download&id=1Tumvs2tvK_8prUtySTKB1MjSL_kkrpMp)
+[![Download Folder](https://img.shields.io/badge/Download%20Folder-Google%20Drive-blue?logo=google-drive)](https://drive.google.com/drive/folders/1Tumvs2tvK_8prUtySTKB1MjSL_kkrpMp?usp=sharing)
+
 
 
 ### Data Format

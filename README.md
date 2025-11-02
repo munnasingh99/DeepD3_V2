@@ -81,6 +81,10 @@ dataset/
 ```bash
 python -c "import flammkuchen as fl; print('Training:', fl.load('dataset/DeepD3_Training.d3set').keys())"
 ```
+## You can download the pretrained model weights here:
+
+[![Download Weights](https://img.shields.io/badge/Download%20Weights-Google%20Drive-blue?logo=google-drive)](https://drive.google.com/uc?export=download&id=1Tumvs2tvK_8prUtySTKB1MjSL_kkrpMp)
+
 
 ### Data Format
 

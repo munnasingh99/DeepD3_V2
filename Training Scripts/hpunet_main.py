@@ -12,9 +12,9 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
-from hpunet_model import *
-from hpunet_train import train_model
-from hpunet_datagen import DataGeneratorDataset
+from models.hpunet_model import *
+from models.hpunet_train import train_model
+from models.hpunet_datagen import DataGeneratorDataset
 
 
 try:
@@ -29,7 +29,7 @@ parser = argparse.ArgumentParser(description="Hierarchical Probabilistic U-Net T
 # General
 parser.add_argument("--config", type=str, help="Path to JSON config file")
 parser.add_argument("--random_seed", type=int, default=0, help="Random seed")
-parser.add_argument("--output_dir", default="output", help="Output directory")
+parser.add_argument("--output_dir", default="hpunet_training_output", help="Output directory")
 parser.add_argument("--comment", default="", help="Comment for run")
 
 # Data

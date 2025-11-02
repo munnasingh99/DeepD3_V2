@@ -10,7 +10,7 @@ import imageio as io
 from tqdm import tqdm
 import torchvision.transforms as transforms
 
-from hpunet_model import HPUNet
+from models.hpunet_model import HPUNet
 
 class InferencePipeline:
     def __init__(self, config_path, dendrite_model_path, spine_model_path):

@@ -17,7 +17,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-from prob_unet_with_tversky import ProbabilisticUnetDualLatent
+from models.prob_unet_with_tversky import ProbabilisticUnetDualLatent
 
 
 

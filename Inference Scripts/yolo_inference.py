@@ -1,11 +1,10 @@
 """
-benchmark_eval_pipeline.py
+yolo_inference.py
 
 End-to-end benchmark evaluator:
 1) YOLO inference on DeepD3_Benchmark.tif (rectangular or tiled)
 2) Save per-slice overlay PNGs + detections CSV
 3) 3D de-duplication of detections
-4) Sweep (conf, iou) grid → compute Precision/Recall/F1 via Metrics class
 
 """
 
@@ -193,7 +192,7 @@ def fuse_wbf(list_boxes, list_scores, list_labels, iou_thr=0.55, skip_box_thr=0.
     return b, s, l
 
 
-# ---------------------------- Drawing -------------------------------
+
 def draw_detections(gray_img, det_xyxy, det_scores, color=(0, 255, 0)):
     """
     Draw detections on grayscale image.

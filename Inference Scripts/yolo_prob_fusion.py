@@ -15,8 +15,8 @@ import json
 import pandas as pd
 
 from ultralytics import YOLO
-from prob_unet_with_tversky import ProbabilisticUnetDualLatent
-from benchmark_eval_pipeline import Metrics, dedup_3d_predictions
+from models.prob_unet_with_tversky import ProbabilisticUnetDualLatent
+from yolo_inference import Metrics, dedup_3d_predictions
 
 def minmax01(im: np.ndarray) -> np.ndarray:
     vmin, vmax = float(im.min()), float(im.max())
@@ -162,7 +162,7 @@ def main():
                 yolo_boxes = res.boxes.xyxy.cpu().numpy().astype(np.float32)
                 yolo_scores = res.boxes.conf.cpu().numpy().astype(np.float32)
         else:
-            from benchmark_eval_pipeline import infer_slice_tiled
+            from yolo_inference import infer_slice_tiled
             yolo_boxes, yolo_scores = infer_slice_tiled(
                 yolo, img_rgb,
                 tile=args.tile,

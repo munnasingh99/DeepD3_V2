@@ -11,7 +11,7 @@ from tqdm import tqdm
 from scipy.ndimage import label as cc_label, center_of_mass
 
 
-from prob_unet_with_tversky import ProbabilisticUnetDualLatent
+from models.prob_unet_with_tversky import ProbabilisticUnetDualLatent
 
 
 def filter_small_objects_3d(binary_mask, min_size_voxels=40):

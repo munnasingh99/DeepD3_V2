@@ -21,8 +21,8 @@ import cv2
 from torch.utils.data import DataLoader
 import wandb
 from pathlib import Path
-from datagen import DataGeneratorDataset
-from prob_unet_with_tversky import ProbabilisticUnetDualLatent
+from models.datagen import DataGeneratorDataset
+from models.prob_unet_with_tversky import ProbabilisticUnetDualLatent
 from torch import autocast
 
 
@@ -407,7 +407,7 @@ def train_model(config=None):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
     
-    out_root = Path("output")
+    out_root = Path("punet_training_output")
     model_dir = out_root / "models"
     img_dir = out_root / "images"
     model_dir.mkdir(parents=True, exist_ok=True)

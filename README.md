@@ -36,18 +36,74 @@ The ensemble uses a **complementary fusion strategy** where:
 
 ```bash
 # Clone repository
-git clone <your-repo-url>
+git clone https://github.com/munnasingh99/DeepD3.V2
 cd DeepD3.V2
 
 # Create virtual environment (recommended)
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
+# Conda environment
+conda create -n <env-name> python=3.10
+
+# Install Pytorch with CUDA=11.8
+conda install pytorch==2.1.2 torchvision==0.16.2 torchaudio==2.1.2 pytorch-cuda=11.8 -c pytorch -c nvidia
+
 # Install requirements
 pip install -r requirements.txt
 ```
 
+##  Complete Project Structure
 
+```
+spine-detection/
+├──  dataset/                      # Data files
+│   ├── DeepD3_Training.d3set
+│   ├── DeepD3_Validation.d3set
+│   ├── DeepD3_Benchmark.tif
+│   ├── Annotations_and_Clusters.csv
+│   └── *.tif                        # Rater annotations
+├──  yolo_dataset/                 # YOLO-formatted data
+│   ├── images/
+│   ├── labels/
+│   └── spine_detection.yaml
+│
+├──  Training Scripts
+│   ├── convert_d3set_to_yolo.py     # Dataset conversion
+│   ├── yolov8_optimized_training.py # YOLO training
+│   ├── training_punet.py            # Prob-UNet training
+│   └── hpunet_main.py               # Hierarchical Prob-UNet
+│
+├──  Inference Scripts
+│   ├── benchmark_eval_pipeline.py   # YOLO inference + eval
+│   ├── punet_infer.py             # PUNet inference
+│   ├── hpunet_infer.py             # HPUNet inference
+│   └── yolo_prob_fusion.py         # Ensemble fusion
+│
+├──  Analysis Scripts
+│   ├── uncertainity_maps.py        # Uncertainty quantification
+│   ├── inter-rater.py              # Inter-rater agreement
+│   ├── visualize_ensemble.py       # Visualization
+│   └── dedup.py                    # 3D NMS utilities
+│
+├──  Model Architectures
+│   ├── prob_unet_with_tversky.py   # Prob-UNet model
+│   ├── hpunet_model.py             # Hierarchical model
+│   └── unet_blocks.py              # U-Net components
+│
+├──  Utilities
+│   ├── hpunet_datagen.py           # Data generators
+│   ├── hpunet_train.py             # Training loops
+│   └── utils.py                    # Helper functions
+│
+├──  Configuration
+│   ├── requirements.txt            # Dependencies
+│   ├── hpunet_config.json          # HPUNet config
+│
+└──  README.md                     # 
+```
+
+---
 ---
 
 ## Dataset Setup
@@ -120,7 +176,7 @@ yolo_dataset/
 #### Training
 
 ```bash
-python yolov8_optimized_training.py \
+python training_yolov8.py \
     --data yolo_dataset/spine_detection.yaml \
     --mode train
 ```
@@ -134,7 +190,7 @@ python yolov8_optimized_training.py \
 - Adds an extra detection head at P2 (stride-4) for detecting smaller spines
 
 
-**Model saves to**: `yolov8_spine_detection/optimized_v8l_p2_1024/weights/best.pt`
+**Model saves to**: `yolov8_training_output/optimized_v8l_p2_1024/weights/best.pt`
 
 
 ### Step 3: Train Probabilistic U-Net
@@ -152,7 +208,7 @@ python training_punet.py \
 
 **What this model does**: Produce spine and dendrite segmentation with uncertainity modelled.
 
-**Model saves to**: `output/models/best_model_f1_*.pth`
+**Model saves to**: `punet_training_output/models/best_model_f1_*.pth`
 
 #### (Option): Hierarchical Prob-UNet (Dual Task: Dendrite + Spine)
 
@@ -167,7 +223,7 @@ python hpunet_main.py \
 **Note**: Training of Hierarchical Prob-UNet is very unstable.
 **What this model does**: Produces dendrite and spine segmentation with hierarchical latent variables
 
-**Model saves to**: `output/<timestamp>/dendrite_model_final.pth` and `spine_model_final.pth`
+**Model saves to**: `hpunet_training_output/<timestamp>/dendrite_model_final.pth` and `spine_model_final.pth`
 
 ---
 
@@ -178,8 +234,8 @@ python hpunet_main.py \
 #### YOLOv8 Inference with Parameter Sweep
 
 ```bash
-python benchmark_eval_pipeline.py \
-    --weights yolov8_spine_detection/optimized_v8l_p2_1024/weights/best.pt \
+python yolo_inference.py \
+    --weights yolo_weights \        # Trained YOLOv8 weights
     --tif dataset/DeepD3_Benchmark.tif \
     --annotations dataset/Annotations_and_Clusters.csv \
     --out yolo_results/ \
@@ -202,8 +258,8 @@ yolo_results/
 #### YOLOv8 with Tiled Inference (Better for Large Images)
 
 ```bash
-python benchmark_eval_pipeline.py \
-    --weights yolov8_spine_detection/optimized_v8l_p2_1024/weights/best.pt \
+python yolo_inference.py \
+    --weights yolo_weights.pt \     # Your trained YOLOv8 weights
     --tif dataset/DeepD3_Benchmark.tif \
     --out yolo_tiled_results/ \
     --tiling \
@@ -221,7 +277,7 @@ python benchmark_eval_pipeline.py \
 
 ```bash
 python punet_inference.py \
-    --weights output/models/best_model_f1_*.pth \
+    --weights punet_weights \       # Your trained Prob-UNet weights
     --tif dataset/DeepD3_Benchmark.tif \
     --out inference_results/ \
 
@@ -243,8 +299,8 @@ python hpunet_infer.py \
     --tif_path dataset/DeepD3_Benchmark.tif \
     --output_dir hpunet_results/ \
     --config hpunet_config.json \
-    --dendrite_model output/<timestamp>/dendrite_model_final.pth \
-    --spine_model output/<timestamp>/spine_model_final.pth
+    --dendrite_model hpunet_dendrite_weights \ # Your trained HProb-UNet spine weights
+    --spine_model hpunet_spine_weights   # Your trained HProb-UNet spine weights
 ```
 ### Output: Probability maps for dendrite and spines
 ```
@@ -262,8 +318,8 @@ This is the **recommended** approach that combines the strengths of both models:
 
 ```bash
 python yolo_prob_fusion.py \
-    --yolo_weights yolov8_spine_detection/optimized_v8l_p2_1024/weights/best.pt \
-    --punet_weights outputs/models/best_model_f1_0.7119.pth \
+    --yolo_weights yolo_weights.pt \     # Your trained YOLOv8 weights
+    --punet_weights punet_weights \      # Your trained Prob-UNet weights 
     --tif dataset/DeepD3_Benchmark.tif \
     --annotations dataset/Annotations_and_Clusters.csv \
     --out fusion_results/ \
@@ -351,7 +407,7 @@ z,x1,y1,x2,y2,score,status
 ```bash
 python uncertainity_maps.py \
     --target spine \
-    --weights outputs/models/best_model_f1_0.7119.pth \
+    --weights punet_weights \      # Your trained Prob-UNet weights \
     --tif dataset/DeepD3_Benchmark.tif \
     --outdir uncertainty_outputs/ \
     --samples 24 \
@@ -437,60 +493,8 @@ visualizations/
 
 ---
 
-##  Complete Project Structure
 
-```
-spine-detection/
-├──  dataset/                      # Data files
-│   ├── DeepD3_Training.d3set
-│   ├── DeepD3_Validation.d3set
-│   ├── DeepD3_Benchmark.tif
-│   ├── Annotations_and_Clusters.csv
-│   └── *.tif                        # Rater annotations
-│
-├──  yolo_dataset/                 # YOLO-formatted data
-│   ├── images/
-│   ├── labels/
-│   └── spine_detection.yaml
-│
-├──  Training Scripts
-│   ├── convert_d3set_to_yolo.py     # Dataset conversion
-│   ├── yolov8_optimized_training.py # YOLO training
-│   ├── training_punet.py            # Prob-UNet training
-│   └── hpunet_main.py               # Hierarchical Prob-UNet
-│
-├──  Inference Scripts
-│   ├── benchmark_eval_pipeline.py   # YOLO inference + eval
-│   ├── punet_infer.py             # PUNet inference
-│   ├── hpunet_infer.py             # HPUNet inference
-│   └── yolo_prob_fusion.py         # Ensemble fusion
-│
-├──  Analysis Scripts
-│   ├── uncertainity_maps.py        # Uncertainty quantification
-│   ├── inter-rater.py              # Inter-rater agreement
-│   ├── visualize_ensemble.py       # Visualization
-│   └── dedup.py                    # 3D NMS utilities
-│
-├──  Model Architectures
-│   ├── prob_unet_with_tversky.py   # Prob-UNet model
-│   ├── hpunet_model.py             # Hierarchical model
-│   └── unet_blocks.py              # U-Net components
-│
-├──  Utilities
-│   ├── hpunet_datagen.py           # Data generators
-│   ├── hpunet_train.py             # Training loops
-│   └── utils.py                    # Helper functions
-│
-├──  Configuration
-│   ├── requirements.txt            # Dependencies
-│   ├── hpunet_config.json          # HPUNet config
-│
-└── 📄 README.md                     # 
-```
-
----
-
-## 🔧 Troubleshooting
+##  Troubleshooting
 
 ### Common Issues
 
@@ -556,7 +560,7 @@ python yolo_prob_fusion.py \
 
 ---
 
-## 🧪 Advanced Usage
+##  Advanced Usage
 
 ### Hyperparameter Tuning
 
@@ -604,16 +608,6 @@ for tif in data/*.tif; do
 done
 ```
 
----
-
-
----
-
-## 📝 License
-
-[Specify your license]
-
----
 
 
 ---
@@ -651,4 +645,4 @@ Friedrich Alexander University, Erlangen-Nürnberg
 
 ---
 
-**Happy spine detecting! 🧠✨**
+**Happy spine detecting! 🧠**

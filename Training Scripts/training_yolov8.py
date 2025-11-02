@@ -48,7 +48,7 @@ config = {
     # System
     "device": 0,
     "workers": 8,
-    "project": "yolov8_spine_detection",
+    "project": "yolov8_training",
     "save_period": 10,
     "amp": True,
     "cache": False,                       
@@ -195,7 +195,7 @@ if __name__ == "__main__":
     # Then override with custom P2 architecture
         model = YOLO(p2_yaml)
         # Modify config for P2
-        config['name'] = 'optimized_v8l_p2_1024'
+        #config['name'] = 'optimized_v8l_p2_1024'
         
         results = train_yolov8_optimized(args.data, config)
         
@@ -203,5 +203,5 @@ if __name__ == "__main__":
 
 # Usage example:
 """
-python3 yolov8_optimized_training.py --data spine_detection.yaml 
+python3 training_yolov8.py --data spine_detection.yaml 
 """

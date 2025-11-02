@@ -471,8 +471,8 @@ def read_prediction_csv_files_simple(folder_path):
 
 
 def evaluate_grid(weights, tif_path, out_dir,
-                  conf_list=(0.10, 0.20, 0.30),
-                  iou_list=(0.55, 0.60, 0.65),
+                  conf=0.10,
+                  iou=0.55,
                   imgsz_hw=(352, 1472),
                   tiling=False, tile=640, overlap=0.5, wbf_iou=0.55,
                   d=np.array([94,94,200], dtype=np.float32), thr=1000.0,
@@ -485,19 +485,18 @@ def evaluate_grid(weights, tif_path, out_dir,
     
     results = []
 
-    # Step 1: Run inference for all configurations
-    print("Running inference for all configurations")
+    # Step 1: Run inference for given configurations
+    print("Running inference for given configurations")
     
-    for conf in conf_list:
-        for iou in iou_list:
-            print(f"\n--- Inference conf={conf:.2f}, iou={iou:.2f} ---")
-            run_once_and_save(
-                weights, tif_path, out_dir,
-                conf, iou, imgsz_hw,
-                tiling, tile, overlap, wbf_iou
-            )
+   
+    print(f"\n--- Inference conf={conf:.2f}, iou={iou:.2f} ---")
+    run_once_and_save(
+        weights, tif_path, out_dir,
+        conf, iou, imgsz_hw,
+        tiling, tile, overlap, wbf_iou
+    )
 
-    # Step 2: Load all prediction CSVs
+    # Step 2: Load all prediction CSV
     print("Loading and deduplicating predictions")
     
     dfs = read_prediction_csv_files_simple(out_dir)
@@ -505,7 +504,7 @@ def evaluate_grid(weights, tif_path, out_dir,
     if len(dfs) == 0:
         print("ERROR: No predictions found!")
         return
-    
+
     # Step 3: Evaluate each configuration
     print("Evaluating metrics")
     
@@ -571,7 +570,7 @@ def evaluate_grid(weights, tif_path, out_dir,
         best_idx = results_df['f1_score'].idxmax()
         best = results_df.iloc[best_idx]
         
-        print("BEST CONFIGURATION")
+        print("CONFIGURATION")
         print(f"  Config:      {best['configuration']}")
         print(f"  Conf:        {best['conf_threshold']:.2f}")
         print(f"  IoU:         {best['iou_threshold']:.2f}")
@@ -623,12 +622,12 @@ def parse_args():
                     help="WBF IoU threshold for fusion")
 
     # Parameter sweep
-    ap.add_argument("--conf_list", type=float, nargs="+", 
-                    default=[0.05, 0.10, 0.15, 0.20, 0.25, 0.30], 
-                    help="Confidence values to test")
-    ap.add_argument("--iou_list", type=float, nargs="+", 
-                    default=[0.35, 0.40, 0.45, 0.50, 0.55, 0.60], 
-                    help="IoU NMS values to test")
+    ap.add_argument("--conf", type=float, 
+                    default=0.10,
+                    help="Confidence value")
+    ap.add_argument("--iou", type=float, 
+                    default=0.55,
+                    help="IoU NMS value")
 
     # 3D deduplication
     ap.add_argument("--thr", type=float, default=1000.0, 
@@ -653,8 +652,8 @@ def main():
         print(f"  WBF IoU:    {args.wbf_iou}")
     else:
         print(f"  Rect size:  {args.rect_h}x{args.rect_w}")
-    print(f"Conf sweep:   {args.conf_list}")
-    print(f"IoU sweep:    {args.iou_list}")
+    print(f"Conf:        {args.conf}")
+    print(f"IoU:        {args.iou}")
     print(f"3D dedup:     {args.thr}")
     print("="*70)
     
@@ -662,8 +661,8 @@ def main():
         weights=args.weights,
         tif_path=args.tif,
         out_dir=args.out,
-        conf_list=tuple(args.conf_list),
-        iou_list=tuple(args.iou_list),
+        conf=tuple(args.conf),
+        iou=tuple(args.iou),
         imgsz_hw=(args.rect_h, args.rect_w),
         tiling=args.tiling, 
         tile=args.tile, 

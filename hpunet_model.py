@@ -357,7 +357,7 @@ class ELBOLoss(nn.Module):
         self.beta_scheduler = beta
         self.last_loss = None
     def forward(self, yhat, y, kls, **kwargs):
-        rec_loss_before_mean = self.reconstruction_loss(yhat, y, **kwargs).sum(dim=tuple(range(1, self.conv_dim)))
+        rec_loss_before_mean = self.reconstruction_loss(yhat, y, **kwargs).sum(dim=tuple(range(1, self.conv_dim + 1)))
         rec_term = rec_loss_before_mean.mean()
         kl_term = self.beta_scheduler.beta * torch.sum(kls)
         loss = rec_term + kl_term
@@ -392,7 +392,7 @@ class GECOLoss(nn.Module):
         else:
             self.rec_constraint_ma = self.decay * self.rec_constraint_ma.detach() + (1 - self.decay) * cons
     def forward(self, yhat, y, kls, **kwargs):
-        rec_loss_before_mean = self.reconstruction_loss(yhat, y, **kwargs).sum(dim=tuple(range(1, self.conv_dim)))
+        rec_loss_before_mean = self.reconstruction_loss(yhat, y, **kwargs).sum(dim=tuple(range(1, self.conv_dim + 1)))
         rec_loss = rec_loss_before_mean.mean()
         rec_constraint = rec_loss - self.kappa
         if self.training is True:
@@ -440,7 +440,7 @@ class KLBalancer(nn.Module):
         return sum(a * kl for a, kl in zip(alphas, kls))
 
 
-# Enhanced ELBO loss with KL balancing - add this to model.py
+# Enhanced ELBO loss with KL balancing
 class EnhancedELBOLoss(nn.Module):
     def __init__(self, reconstruction_loss, n_latents, beta=None, conv_dim=2, kl_balancing=True):
         super().__init__()
@@ -458,7 +458,7 @@ class EnhancedELBOLoss(nn.Module):
         self.last_loss = None
  
     def forward(self, yhat, y, kls, **kwargs):
-        rec_loss_before_mean = self.reconstruction_loss(yhat, y, **kwargs).sum(dim=tuple(range(1, self.conv_dim)))
+        rec_loss_before_mean = self.reconstruction_loss(yhat, y, **kwargs).sum(dim=tuple(range(1, self.conv_dim + 1)))
         rec_term = rec_loss_before_mean.mean()
         
         if self.kl_balancing:

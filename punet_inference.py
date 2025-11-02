@@ -121,16 +121,14 @@ def main():
     
     ap.add_argument("--weights", required=True, help="Model checkpoint path")
     ap.add_argument("--tif", required=True, help="Input TIF (Z,H,W) or (H,W)")
-    ap.add_argument("--out", required=True, help="Output directory")
-    ap.add_argument("--gts", required=True, nargs="+", help="Ground truth masks")
+    ap.add_argument("--out", default="inference_results_punet/", help="Output directory")
     
     ap.add_argument("--posterior", action="store_true", help="Use posterior sampling")
     ap.add_argument("--samples", type=int, default=24, help="MC samples (default: 24)")
     ap.add_argument("--temp", type=float, default=1.4, help="Temperature scaling (default: 1.4)")
-    
-    ap.add_argument("--thr_d", type=float, default=0.50, help="Dendrite threshold")
-    ap.add_argument("--thr_s_list", default="0.52,0.54,0.56", help="Comma-separated spine thresholds")
-    
+
+    ap.add_argument("--thr", type=float, default=0.50, help="Prediction threshold")
+
     ap.add_argument("--match_nm", type=float, default=1000.0, help="Centroid match distance (nm)")
     ap.add_argument("--px_x", type=float, default=94.0, help="Pixel size X (nm)")
     ap.add_argument("--px_y", type=float, default=94.0, help="Pixel size Y (nm)")
@@ -150,7 +148,6 @@ def main():
     print(f"Posterior sampling: {args.posterior}")
     print(f"MC samples: {args.samples}")
     print(f"Temperature: {args.temp}")
-    print(f"Min object size: {args.min_size} voxels")
 
     model = ProbabilisticUnetDualLatent(
         input_channels=1,
@@ -179,11 +176,11 @@ def main():
         vol = vol[np.newaxis, ...]
     Z, H, W = vol.shape
 
-    thr_ss = parse_float_list(args.thr_s_list)
+    thr = args.thr
 
     prob_d = np.zeros((Z, H, W), dtype=np.float32)
     prob_s = np.zeros((Z, H, W), dtype=np.float32)
-    raw_masks = {ts: np.zeros((Z, H, W), dtype=np.uint8) for ts in thr_ss}
+    raw_masks = np.zeros((Z, H, W), dtype=np.uint8)
 
     print("\nRunning inference...")
     for z in tqdm(range(Z), desc="Inferring"):
@@ -197,27 +194,34 @@ def main():
         prob_d[z] = d_prob
         prob_s[z] = s_prob
 
-        for ts in thr_ss:
-            raw_masks[ts][z] = (s_prob >= ts).astype(np.uint8)
+
+        raw_masks[z] = (s_prob >= thr).astype(np.uint8)
 
 
-    print(f"\nApplying size filtering (min_size={args.min_size} voxels)...")
-    for ts in thr_ss:
-        raw_masks[ts] = filter_small_objects_3d(raw_masks[ts], min_size_voxels=args.min_size)
-        raw_masks[ts] = (raw_masks[ts] * 255).astype(np.uint8)
+    raw_masks = filter_small_objects_3d(raw_masks, min_size_voxels=args.min_size)
+    raw_masks = (raw_masks * 255).astype(np.uint8)
 
+    print("\nSaving raw masks.")
     save_stack(outdir / "prob_dendrite.tif", prob_d, np.float32)
     save_stack(outdir / "prob_spine.tif", prob_s, np.float32)
     
+    print("\nSaving filtered masks.")
     tag = f"{'post' if args.posterior else 'prior'}_S{args.samples}_T{args.temp:.2f}_size{args.min_size}"
-    for ts, m in raw_masks.items():
-        save_stack(outdir / f"mask_spine_{tag}_thr{ts:.2f}.tif", m, np.uint8)
-    
-    d_mask_binary = (prob_d >= args.thr_d).astype(np.uint8)
+    save_stack(outdir / f"mask_spine_{tag}_thr{thr:.2f}.tif", raw_masks, np.uint8)
+
+    d_mask_binary = (prob_d >= args.thr).astype(np.uint8)
     d_mask_filtered = filter_small_objects_3d(d_mask_binary, min_size_voxels=args.min_size)
-    save_stack(outdir / f"mask_dendrite_{tag}_thr{args.thr_d:.2f}.tif",
+    save_stack(outdir / f"mask_dendrite_{tag}_thr{args.thr:.2f}.tif",
                (d_mask_filtered * 255).astype(np.uint8), np.uint8)
     
 
 if __name__ == "__main__":
     main()
+
+# Usage example:
+'''
+python punet_inference.py \
+    --weights output/models/best_model_f1_*.pth \
+    --tif dataset/DeepD3_Benchmark.tif \
+    --out inference_results/ \
+'''

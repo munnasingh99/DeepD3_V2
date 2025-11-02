@@ -7,7 +7,7 @@ from torchvision.utils import make_grid
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from torchvision.utils import save_image
-from model import *
+from hpunet_model import *
 
 try:
     import wandb
@@ -208,6 +208,7 @@ def train_model(args, model, dataloader, criterion, optimizer, lr_scheduler, dev
                 preds, infodict = preds[:,0], infodicts[0]
 
             truths = truths.squeeze(dim=1)
+            print(preds.max(), preds.min())
 
             # Calculate Loss
             loss = criterion(preds, truths, kls=infodict['kls'], lr=lr_scheduler.get_last_lr()[0])
